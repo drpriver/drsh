@@ -20,9 +20,14 @@ A basic makefile is provided.
 
 ## Builtin Commands
 
+- .
 - cd
 - echo
+- exit
+- pwd
 - set ENVVAR value
+- source
+- time
 
 ## Features
 
