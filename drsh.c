@@ -3968,7 +3968,25 @@ drsh_read_file(const char*restrict filepath, DrshGrowBuffer* outbuff){
     }
     if(!S_ISREG(s.st_mode)){
         // loop until eof
-        return EC_UNIMPLEMENTED_ERROR;
+        for(;;){
+            DrshEC err = drsh_gb_ensure(outbuff, 4096);
+            if(err){
+                close(fd);
+                return err;
+            }
+            DrshWriteBuffer wb = drsh_gb_writable_buffer(outbuff);
+            ssize_t read_result = read(fd, wb.ptr, wb.length);
+            if(read_result < 0){
+                if(errno == EINTR) continue;
+                if(errno == EAGAIN) continue;
+                close(fd);
+                return EC_IO_ERROR;
+            }
+            if(read_result == 0) break;
+            outbuff->count += read_result;
+        }
+        close(fd);
+        return EC_OK;
     }
     else {
         off_t length = s.st_size;
