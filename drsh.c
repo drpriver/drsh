@@ -2747,7 +2747,7 @@ drsh_at_atomize(DrshAtomTable*restrict at, const char* restrict txt, size_t leng
             // printf("hash -> idx: %u -> %u\r\n", hash, idx);
             while(idxes[idx]){
                 idx++;
-                if(idx > 2*cap) idx = 0;
+                if(idx >= 2*cap) idx = 0;
             }
             idxes[idx] = (uint32_t)i+1;
         }
@@ -3064,7 +3064,7 @@ drsh_env_sort_env(DrshEnvironment* env){
         uint32_t idx = drsh_fast_reduce32(hash, cap);
         while(idxes[idx]){
             idx++;
-            if(idx > 2*cap) idx = 0;
+            if(idx >= 2*cap) idx = 0;
         }
         idxes[idx] = (uint32_t)i+1;
     }
