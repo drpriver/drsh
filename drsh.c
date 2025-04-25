@@ -1,8 +1,8 @@
-// Copyright © 2024, David Priver <david@davidpriver.com>
+// Copyright © 2024-2025, David Priver <david@davidpriver.com>
 //
 // TODOs:
 //  - globs
-//    - need to roll brace expansion instead of using glob(3)
+//    - need to roll our own brace expansion instead of using glob(3)
 //    - regex globs maybe?
 //  - tab completion
 //    - [x] paths
@@ -2725,8 +2725,7 @@ DRSH_WARN_UNUSED
 DrshEC
 drsh_at_atomize(DrshAtomTable*restrict at, const char* restrict txt, size_t length, const DrshAtom**restrict out_atom){
     if(length >= UINT32_MAX) return EC_VALUE_ERROR;
-    // if(1){
-    if(at->count * 10/8 >= at->cap){
+    if(at->count >= at->cap){
         // printf("grow table\r\n");
         // grow
         size_t old_cap = at->cap;
@@ -3995,12 +3994,18 @@ drsh_read_file(const char*restrict filepath, DrshGrowBuffer* outbuff){
             close(fd);
             return err;
         }
-        DrshWriteBuffer wb = drsh_gb_writable_buffer(outbuff);
-        ssize_t read_result = read(fd, wb.ptr, length);
+        for(;length;){
+            DrshWriteBuffer wb = drsh_gb_writable_buffer(outbuff);
+            ssize_t read_result = read(fd, wb.ptr, length);
+            if(read_result < 0 && errno == EINTR) continue;
+            if(read_result <= 0){
+                close(fd);
+                return EC_IO_ERROR;
+            }
+            length -= read_result;
+            outbuff->count += read_result;
+        }
         close(fd);
-        if(read_result != length)
-            return EC_IO_ERROR;
-        outbuff->count += read_result;
         return EC_OK;
     }
 #endif
